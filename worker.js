@@ -1,5 +1,5 @@
-var fs = require('fs');
 var _ = require('lodash');
+var SCWorker = require('socketcluster/scworker');
 var express = require('express');
 var serveStatic = require('serve-static');
 var path = require('path');
@@ -51,8 +51,9 @@ function getRandomPosition(spriteWidth, spriteHeight) {
   };
 }
 
-module.exports.run = function (worker) {
-  console.log('   >> Worker PID:', process.pid);
+class Worker extends SCWorker {
+  run() {
+    console.log('   >> Worker PID:', process.pid);
 
   // We use a codec for SC to compress messages between clients and the server
   // to a lightweight binary format to reduce bandwidth consumption.
@@ -60,27 +61,27 @@ module.exports.run = function (worker) {
   // world-specific entities. For example, instead of emitting the JSON:
   // {id: '...', width: 200, height: 200}
   // We could compress it down to something like: {id: '...', w: 200, h: 200, c: 1000}
-  worker.scServer.setCodecEngine(scCodecMinBin);
+  this.scServer.setCodecEngine(scCodecMinBin);
 
-  var environment = worker.options.environment;
-  var serverWorkerId = worker.options.instanceId + ':' + worker.id;
+    var environment = this.options.environment;
+  	var serverWorkerId = this.options.instanceId + ':' + this.id;
 
-  var app = express();
+    var app = express();
 
-  var httpServer = worker.httpServer;
-  var scServer = worker.scServer;
+    var httpServer = this.httpServer;
+    var scServer = this.scServer;
 
-  if (environment == 'dev') {
-    // Log every HTTP request. See https://github.com/expressjs/morgan for other
-    // available formats.
-    app.use(morgan('dev'));
-  }
-  app.use(serveStatic(path.resolve(__dirname, 'public')));
+    if (environment === 'dev') {
+      // Log every HTTP request. See https://github.com/expressjs/morgan for other
+      // available formats.
+      app.use(morgan('dev'));
+    }
+    app.use(serveStatic(path.resolve(__dirname, 'public')));
 
-  // Add GET /health-check express route
-  healthChecker.attach(worker, app);
+    // Add GET /health-check express route
+    healthChecker.attach(this, app);
 
-  httpServer.on('request', app);
+    httpServer.on('request', app);
 
   scServer.addMiddleware(scServer.MIDDLEWARE_SUBSCRIBE, function (req, next) {
     if (req.channel.indexOf('internal/') == 0) {
@@ -121,13 +122,13 @@ module.exports.run = function (worker) {
     channelGrid: channelGrid
   });
 
-  if (WORLD_CELLS % worker.options.workers != 0) {
+  if (WORLD_CELLS % this.options.workers != 0) {
     var errorMessage = 'The number of cells in your world (determined by WORLD_WIDTH, WORLD_HEIGHT, WORLD_CELL_WIDTH, WORLD_CELL_HEIGHT)' +
       ' should share a common factor with the number of workers or else the workload might get duplicated for some cells.';
     console.error(errorMessage);
   }
 
-  var cellsPerWorker = WORLD_CELLS / worker.options.workers;
+  var cellsPerWorker = WORLD_CELLS / this.options.workers;
 
   var cellData = {};
   var cellPendingDeletes = {};
@@ -142,7 +143,7 @@ module.exports.run = function (worker) {
   var cellSpecialIntervalTypes = {};
 
   for (var h = 0; h < cellsPerWorker; h++) {
-    var cellIndex = worker.id + h * worker.options.workers;
+    var cellIndex = this.id + h * this.options.workers;
     cellData[cellIndex] = {};
     cellPendingDeletes[cellIndex] = {};
     cellExternalStates[cellIndex] = {};
@@ -151,7 +152,7 @@ module.exports.run = function (worker) {
       cellIndex: cellIndex,
       cellData: cellData[cellIndex],
       cellBounds: channelGrid.getCellBounds(cellIndex),
-      worker: worker
+      worker: this
     }, util);
 
     channelGrid.watchCellAtIndex(CHANNEL_INBOUND_CELL_PROCESSING, cellIndex, gridCellDataHandler.bind(null, cellIndex));
@@ -737,4 +738,7 @@ module.exports.run = function (worker) {
       }
     });
   });
-};
+}
+}
+
+new Worker();

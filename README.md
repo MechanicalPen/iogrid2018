@@ -1,6 +1,8 @@
 IOGrid
 ======
 
+Here's this project, but updated for the latest (as far as I'm aware / care to) versions of all the dependacies.
+
 [![Join the chat at https://gitter.im/SocketCluster/iogrid](https://badges.gitter.im/SocketCluster/iogrid.svg)](https://gitter.im/SocketCluster/iogrid?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 IOGrid is an IO game engine/framework built using SocketCluster and Phaser.
@@ -31,14 +33,14 @@ Read the comments in the code for more details about how it all works.
 
 ### Running
 
-To run on your machine, you need to have Node.js `v6.0.0` or higher installed.
+To run on your machine, you need to have Node.js `v10.13.0` or higher installed.
 Then you can either clone this repo with Git using the command:
 
 ```
-git clone git@github.com:SocketCluster/iogrid.git
+git clone git@github.com:MechanicalPen/iogrid2018.git
 ```
 
-... Or you can download the zip: https://github.com/SocketCluster/iogrid/archive/master.zip and extract it to a directory of your choice.
+... Or you can download the zip: https://github.com/MechanicalPen/iogrid2018/archive/master.zip and extract it to a directory of your choice.
 
 Once you have this repo setup in a `iogrid` directory on your machine, you need to navigate to it using the terminal and then run:
 
@@ -61,6 +63,7 @@ Open up another browser window/tab to `http://localhost:8000` and put it side-by
 Note that while this demo demonstrates a few important optimizations, it can still be optimized further.
 For production usage, among other things, you may want to improve the current codec to make the packets that are sent to the client even smaller.
 You may want to build your own codec on top of https://github.com/SocketCluster/sc-codec-min-bin.
+Additoinally, this repo uses the 'ws' module for the WebSocket engine for maximum compatibilty. Upgrading to a 'uuws' or 'sc-uws' may greatly improve performace.
 
 If you want to run the server on port 80, you'll need to run the SocketCluster server with `sudo node server -p 80`.
 
